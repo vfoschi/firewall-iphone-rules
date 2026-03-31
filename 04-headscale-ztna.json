@@ -1,0 +1,92 @@
+{
+  "firewall_policy": {
+    "description": "Regole aggiuntive per soluzione ZTNA Headscale NETMON su iPhone",
+    "default_action": "DROP",
+    "direction": "OUTBOUND",
+    "complement_to": "01-iphone-base.json",
+    "notes": "Queste regole si aggiungono a quelle base. Presuppongono DNS e NTP già abilitati.",
+    "rules": [
+      {
+        "id": "HS-001",
+        "category": "Headscale_ControlPlane",
+        "description": "Headscale NETMON — control plane HTTPS/gRPC (autenticazione e key exchange)",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": ["hs.netmon.it"],
+        "action": "ALLOW",
+        "priority": 400,
+        "notes": "Endpoint pubblico del control plane Headscale NETMON. Sostituire con FQDN reale."
+      },
+      {
+        "id": "HS-002",
+        "category": "WireGuard_DataPlane",
+        "description": "WireGuard — tunnel cifrato diretto tra peer (data plane)",
+        "protocol": "UDP",
+        "destination_port": 41641,
+        "destination": "ANY",
+        "action": "ALLOW",
+        "priority": 401,
+        "notes": "Porta WireGuard default di Tailscale. Il client tenta questa porta prima del fallback."
+      },
+      {
+        "id": "HS-003",
+        "category": "STUN_NAT_Traversal",
+        "description": "STUN — scoperta endpoint pubblico per traversal NAT WireGuard",
+        "protocol": "UDP",
+        "destination_port": 3478,
+        "destination_fqdns": ["hs.netmon.it"],
+        "action": "ALLOW",
+        "priority": 402,
+        "notes": "Usato da Tailscale per hole-punching NAT. Stesso host del control plane."
+      },
+      {
+        "id": "HS-004",
+        "category": "DERP_Relay",
+        "description": "DERP relay — fallback HTTPS quando WireGuard diretto è impossibile (NAT simmetrico)",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": ["derp.netmon.it"],
+        "action": "ALLOW",
+        "priority": 403,
+        "notes": "Attivato solo se NAT simmetrico impedisce connessione UDP diretta. Traffico rimane cifrato WireGuard anche via DERP."
+      },
+      {
+        "id": "HS-005",
+        "category": "WireGuard_Fallback",
+        "description": "WireGuard fallback su porta 80 UDP (ambienti con filtraggio UDP/41641)",
+        "protocol": "UDP",
+        "destination_port": 80,
+        "destination": "ANY",
+        "action": "ALLOW",
+        "priority": 404,
+        "notes": "Tailscale tenta UDP/80 come secondo fallback se UDP/41641 è bloccato."
+      },
+      {
+        "id": "HS-006",
+        "category": "Headscale_Cliente",
+        "description": "Headscale Cliente — control plane locale rete cliente (opzionale, solo se raggiungibile)",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": ["hs.cliente.it"],
+        "action": "ALLOW",
+        "priority": 405,
+        "notes": "Sostituire hs.cliente.it con il FQDN reale del Headscale del cliente. Può essere privato (raggiungibile solo via mesh)."
+      }
+    ]
+  },
+  "metadata": {
+    "version": "1.0",
+    "generated": "2026-03-31",
+    "scope": "iPhone su Wi-Fi aziendale — ZTNA Headscale NETMON",
+    "covers": [
+      "Headscale control plane (autenticazione OIDC + key exchange WireGuard)",
+      "WireGuard data plane (tunnel cifrato end-to-end)",
+      "STUN per NAT traversal",
+      "DERP relay (fallback quando peer-to-peer non possibile)",
+      "Headscale Cliente (control plane rete cliente)"
+    ],
+    "architecture_note": "Il traffico dati (WireGuard) è peer-to-peer e NON transita sul control plane. Il control plane gestisce solo lo scambio di chiavi pubbliche. L'IP overlay del dispositivo rimane invariato al cambio WiFi/SIM.",
+    "netmon_integration": "Headscale NETMON si integra con NETMON API via webhook per verificare che la SIM del dispositivo sia attiva e abbia il profilo di sicurezza corretto. SIM disattivata = revoca immediata accesso mesh.",
+    "no_ssl_inspection": "NON applicare SSL inspection sul traffico verso hs.netmon.it e derp.netmon.it: WireGuard è già cifrato e l'inspection causa drop della connessione."
+  }
+}
