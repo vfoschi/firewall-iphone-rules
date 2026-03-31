@@ -1,0 +1,125 @@
+{
+  "firewall_policy": {
+    "description": "Regole minime per autenticazione Google (OAuth2/OIDC) su iPhone via Wi-Fi aziendale",
+    "default_action": "DROP",
+    "direction": "OUTBOUND",
+    "complement_to": "01-iphone-base.json",
+    "rules": [
+      {
+        "id": "GOOG-001",
+        "category": "Google_Auth_Primary",
+        "description": "Google OAuth2/OIDC - endpoint primario di autenticazione",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": [
+          "accounts.google.com",
+          "accounts.google.it"
+        ],
+        "action": "ALLOW",
+        "priority": 100,
+        "reference": "https://support.google.com/a/answer/9012184"
+      },
+      {
+        "id": "GOOG-002",
+        "category": "Google_Auth_Token",
+        "description": "Google OAuth2 - endpoint scambio e refresh token",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": [
+          "oauth2.googleapis.com",
+          "www.googleapis.com"
+        ],
+        "action": "ALLOW",
+        "priority": 101
+      },
+      {
+        "id": "GOOG-003",
+        "category": "Google_Auth_OIDC_Discovery",
+        "description": "Google OIDC - discovery document e JWKS",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": [
+          "openidconnect.googleapis.com"
+        ],
+        "action": "ALLOW",
+        "priority": 102
+      },
+      {
+        "id": "GOOG-004",
+        "category": "Google_Auth_Assets",
+        "description": "Google Auth - asset statici UI login (font, script GAPI)",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": [
+          "ssl.gstatic.com",
+          "www.gstatic.com",
+          "fonts.gstatic.com",
+          "fonts.googleapis.com"
+        ],
+        "action": "ALLOW",
+        "priority": 103
+      },
+      {
+        "id": "GOOG-005",
+        "category": "Google_Auth_UserInfo",
+        "description": "Google People API - recupero profilo utente post-autenticazione",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": [
+          "people.googleapis.com"
+        ],
+        "action": "ALLOW",
+        "priority": 104
+      },
+      {
+        "id": "GOOG-010",
+        "category": "Google_Authenticator_Sync",
+        "description": "Google Authenticator - sincronizzazione TOTP e backup",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": [
+          "*.googleapis.com"
+        ],
+        "action": "ALLOW",
+        "priority": 110
+      },
+      {
+        "id": "GOOG-020",
+        "category": "Google_Certificate_CRL",
+        "description": "Google PKI - CRL per certificati TLS",
+        "protocol": "TCP",
+        "destination_port": 80,
+        "destination_fqdns": [
+          "crl.pki.goog",
+          "crls.pki.goog",
+          "c.pki.goog"
+        ],
+        "action": "ALLOW",
+        "priority": 120,
+        "reference": "https://support.google.com/a/answer/9012184"
+      },
+      {
+        "id": "GOOG-021",
+        "category": "Google_Certificate_OCSP",
+        "description": "Google PKI - OCSP validazione certificati TLS",
+        "protocol": "TCP",
+        "destination_port": 80,
+        "destination_fqdns": [
+          "ocsp.pki.goog"
+        ],
+        "action": "ALLOW",
+        "priority": 121
+      }
+    ]
+  },
+  "metadata": {
+    "version": "1.0",
+    "generated": "2026-03-31",
+    "scope": "iPhone su Wi-Fi aziendale - Google Authentication (OAuth2/OIDC)",
+    "covers": [
+      "Google OAuth2 / OpenID Connect",
+      "Google Authenticator (TOTP + backup)",
+      "Google PKI - validazione certificati TLS (CRL + OCSP)"
+    ]
+  }
+}

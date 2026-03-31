@@ -1,0 +1,191 @@
+{
+  "firewall_policy": {
+    "description": "Regole minime per iPhone su Wi-Fi aziendale: Wi-Fi Calling + Microsoft 365 Authentication",
+    "default_action": "DROP",
+    "direction": "OUTBOUND",
+    "rules": [
+      {
+        "id": "RULE-001",
+        "category": "DNS",
+        "description": "Risoluzione DNS UDP - prerequisito fondamentale",
+        "protocol": "UDP",
+        "destination_port": 53,
+        "destination": "ANY",
+        "action": "ALLOW",
+        "priority": 10
+      },
+      {
+        "id": "RULE-002",
+        "category": "DNS_TCP",
+        "description": "Risoluzione DNS TCP (fallback e risposte grandi)",
+        "protocol": "TCP",
+        "destination_port": 53,
+        "destination": "ANY",
+        "action": "ALLOW",
+        "priority": 11
+      },
+      {
+        "id": "RULE-003",
+        "category": "NTP",
+        "description": "Sincronizzazione orario - critico per TLS e autenticazione M365/MFA",
+        "protocol": "UDP",
+        "destination_port": 123,
+        "destination": "ANY",
+        "action": "ALLOW",
+        "priority": 20,
+        "notes": "iOS usa time.apple.com (17.0.0.0/8). Senza NTP l'autenticazione OIDC fallisce per clock skew"
+      },
+      {
+        "id": "RULE-010",
+        "category": "Apple_APNS",
+        "description": "Apple Push Notification Service - canale primario dispositivo->Apple",
+        "protocol": "TCP",
+        "destination_port": 5223,
+        "destination_cidr": "17.0.0.0/8",
+        "action": "ALLOW",
+        "priority": 30,
+        "reference": "https://support.apple.com/en-us/102266"
+      },
+      {
+        "id": "RULE-011",
+        "category": "Apple_APNS_fallback",
+        "description": "Apple Push Notification Service - fallback HTTPS e attivazione dispositivo",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_cidr": "17.0.0.0/8",
+        "action": "ALLOW",
+        "priority": 31
+      },
+      {
+        "id": "RULE-012",
+        "category": "Apple_APNS_alt",
+        "description": "Apple Push Notification Service - porta alternativa",
+        "protocol": "TCP",
+        "destination_port": 2197,
+        "destination_cidr": "17.0.0.0/8",
+        "action": "ALLOW",
+        "priority": 32
+      },
+      {
+        "id": "RULE-020",
+        "category": "WiFi_Calling_IKE",
+        "description": "Wi-Fi Calling - negoziazione IKEv2 per tunnel IPsec vocale",
+        "protocol": "UDP",
+        "destination_port": 500,
+        "destination": "ANY",
+        "action": "ALLOW",
+        "priority": 40
+      },
+      {
+        "id": "RULE-021",
+        "category": "WiFi_Calling_IPsec_NAT",
+        "description": "Wi-Fi Calling - IPsec ESP in UDP (NAT traversal)",
+        "protocol": "UDP",
+        "destination_port": 4500,
+        "destination": "ANY",
+        "action": "ALLOW",
+        "priority": 41
+      },
+      {
+        "id": "RULE-030",
+        "category": "Microsoft365_Auth_Primary",
+        "description": "Microsoft Entra ID - autenticazione OAuth2/OIDC principale",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": [
+          "login.microsoftonline.com",
+          "login.microsoft.com",
+          "login.windows.net",
+          "sts.windows.net",
+          "login.live.com"
+        ],
+        "action": "ALLOW",
+        "priority": 50
+      },
+      {
+        "id": "RULE-031",
+        "category": "Microsoft365_Auth_CDN",
+        "description": "Microsoft 365 - CDN autenticazione, token, librerie MSAL",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": [
+          "aadcdn.msftauth.net",
+          "aadcdn.msauth.net",
+          "secure.aadcdn.microsoftonline-p.com",
+          "account.live.com",
+          "*.msecnd.net"
+        ],
+        "action": "ALLOW",
+        "priority": 51
+      },
+      {
+        "id": "RULE-032",
+        "category": "Microsoft365_Graph_Token",
+        "description": "Microsoft Graph API - validazione token e profilo utente",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": [
+          "graph.microsoft.com",
+          "management.azure.com"
+        ],
+        "action": "ALLOW",
+        "priority": 52
+      },
+      {
+        "id": "RULE-033",
+        "category": "Microsoft_MFA_Push",
+        "description": "Microsoft Authenticator - push notification MFA",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": [
+          "*.microsoftonline.com",
+          "*.microsoftonline-p.com"
+        ],
+        "action": "ALLOW",
+        "priority": 53
+      },
+      {
+        "id": "RULE-040",
+        "category": "Certificate_Validation_OCSP",
+        "description": "Validazione certificati TLS via OCSP",
+        "protocol": "TCP",
+        "destination_port": 80,
+        "destination_fqdns": [
+          "ocsp.digicert.com",
+          "ocsp.msocsp.com",
+          "ocsp2.globalsign.com",
+          "oneocsp.microsoft.com"
+        ],
+        "action": "ALLOW",
+        "priority": 60
+      },
+      {
+        "id": "RULE-041",
+        "category": "Certificate_Validation_CRL",
+        "description": "Download CRL - fallback rispetto a OCSP",
+        "protocol": "TCP",
+        "destination_port": 80,
+        "destination_fqdns": [
+          "crl.microsoft.com",
+          "crl3.digicert.com",
+          "crl4.digicert.com",
+          "mscrl.microsoft.com"
+        ],
+        "action": "ALLOW",
+        "priority": 61
+      }
+    ]
+  },
+  "metadata": {
+    "version": "1.0",
+    "generated": "2026-03-31",
+    "scope": "iPhone su Wi-Fi aziendale - funzionalita minime",
+    "covers": [
+      "Wi-Fi Calling (IPsec/IKEv2)",
+      "Apple Push Notification Service (APNS)",
+      "Microsoft Entra ID / Azure AD authentication (OAuth2/OIDC)",
+      "Microsoft Authenticator MFA push",
+      "Validazione certificati TLS (OCSP/CRL)"
+    ]
+  }
+}

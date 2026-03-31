@@ -1,0 +1,165 @@
+{
+  "firewall_policy": {
+    "description": "Regole minime per autenticazione Okta + Auth0 (OAuth2/OIDC) su iPhone via Wi-Fi aziendale",
+    "default_action": "DROP",
+    "direction": "OUTBOUND",
+    "complement_to": ["01-iphone-base.json", "02-google-auth.json"],
+    "rules": [
+      {
+        "id": "OKTA-001",
+        "category": "Okta_Auth_Primary",
+        "description": "Okta tenant - endpoint autenticazione OIDC/OAuth2/SAML",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": ["*.okta.com", "*.mtls.okta.com"],
+        "action": "ALLOW",
+        "priority": 200,
+        "reference": "https://help.okta.com/oie/en-us/content/topics/security/ip-address-allow-listing.htm"
+      },
+      {
+        "id": "OKTA-002",
+        "category": "Okta_Auth_EMEA",
+        "description": "Okta tenant regione EMEA (Europa)",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": ["*.okta-emea.com", "*.mtls.okta-emea.com"],
+        "action": "ALLOW",
+        "priority": 201
+      },
+      {
+        "id": "OKTA-003",
+        "category": "Okta_CDN",
+        "description": "Okta CDN - asset statici UI login (JS, CSS, Sign-In Widget)",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": ["*.oktacdn.com", "okta-featureflag-edge.azureedge.net"],
+        "action": "ALLOW",
+        "priority": 202
+      },
+      {
+        "id": "OKTA-004",
+        "category": "Okta_Preview",
+        "description": "Okta preview environment (solo staging/test)",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": ["*.oktapreview.com", "*.mtls.oktapreview.com"],
+        "action": "ALLOW",
+        "priority": 203
+      },
+      {
+        "id": "OKTA-005",
+        "category": "Okta_Kerberos",
+        "description": "Okta Kerberos agent - Desktop SSO con AD (opzionale)",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": ["*.kerberos.okta.com", "*.kerberos.okta-emea.com"],
+        "action": "ALLOW",
+        "priority": 204
+      },
+      {
+        "id": "OKTA-006",
+        "category": "Okta_GlobalAccelerator",
+        "description": "Okta AWS Global Accelerator - routing ottimizzato",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": ["*.awsglobalaccelerator.com"],
+        "action": "ALLOW",
+        "priority": 205
+      },
+      {
+        "id": "OKTA-010",
+        "category": "Okta_CRL_OCSP",
+        "description": "Okta - validazione certificati TLS (DigiCert CRL/OCSP)",
+        "protocol": "TCP",
+        "destination_port": 80,
+        "destination_fqdns": ["ocsp.digicert.com", "crl3.digicert.com", "crl4.digicert.com"],
+        "action": "ALLOW",
+        "priority": 210
+      },
+      {
+        "id": "AUTH0-001",
+        "category": "Auth0_Tenant_Primary",
+        "description": "Auth0 tenant - endpoint principale OAuth2/OIDC",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": [
+          "YOUR_TENANT.auth0.com",
+          "YOUR_TENANT.eu.auth0.com",
+          "YOUR_TENANT.au.auth0.com"
+        ],
+        "action": "ALLOW",
+        "priority": 300,
+        "reference": "https://auth0.com/docs/secure/security-guidance/data-security/allowlist",
+        "notes": "Sostituire YOUR_TENANT con il nome del tenant Auth0"
+      },
+      {
+        "id": "AUTH0-002",
+        "category": "Auth0_CDN",
+        "description": "Auth0 CDN - Universal Login Page assets",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": ["cdn.auth0.com", "cdn.eu.auth0.com", "cdn.au.auth0.com"],
+        "action": "ALLOW",
+        "priority": 301
+      },
+      {
+        "id": "AUTH0-003",
+        "category": "Auth0_CustomDomain",
+        "description": "Auth0 custom domain branded (opzionale)",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": ["login.YOUR_COMPANY_DOMAIN.com"],
+        "action": "ALLOW",
+        "priority": 302,
+        "notes": "Sostituire con il proprio custom domain se configurato"
+      },
+      {
+        "id": "AUTH0-005",
+        "category": "Auth0_MFA_Guardian",
+        "description": "Auth0 Guardian - push MFA (notifiche via APNs)",
+        "protocol": "TCP",
+        "destination_port": 443,
+        "destination_fqdns": ["*.guardian.auth0.com"],
+        "action": "ALLOW",
+        "priority": 304
+      },
+      {
+        "id": "AUTH0-010",
+        "category": "Auth0_CRL_OCSP",
+        "description": "Auth0 - validazione certificati TLS (DigiCert + Let's Encrypt)",
+        "protocol": "TCP",
+        "destination_port": 80,
+        "destination_fqdns": [
+          "ocsp.digicert.com",
+          "crl3.digicert.com",
+          "crl4.digicert.com",
+          "r3.o.lencr.org"
+        ],
+        "action": "ALLOW",
+        "priority": 310
+      }
+    ]
+  },
+  "metadata": {
+    "version": "1.0",
+    "generated": "2026-03-31",
+    "scope": "iPhone su Wi-Fi aziendale - Okta + Auth0 Authentication",
+    "covers": [
+      "Okta Identity Engine - OAuth2/OIDC/SAML",
+      "Okta CDN - Sign-In Widget",
+      "Okta Verify MFA push (via APNs)",
+      "Okta EMEA region",
+      "Auth0 Universal Login (Authorization Code + PKCE)",
+      "Auth0 Guardian MFA push (via APNs)",
+      "CRL/OCSP per certificati Okta e Auth0"
+    ],
+    "placeholder_substitutions": [
+      "YOUR_TENANT -> nome del tenant Auth0 (es. mycompany)",
+      "YOUR_COMPANY_DOMAIN.com -> custom domain Auth0 se configurato"
+    ],
+    "dynamic_ip_note": {
+      "okta": "IP dinamici AWS - usare FQDN. Lista: https://s3.amazonaws.com/okta-ip-ranges/ip_ranges.json",
+      "auth0": "IP outbound statici per regione ma soggetti a variazione. Lista: https://cdn.auth0.com/ip-ranges.json"
+    }
+  }
+}
